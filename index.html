@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guess Who I Am ❤️</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Great+Vibes&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins', sans-serif; }
+
+body {
+    background: linear-gradient(135deg, #ff1744, #8e0038);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    color: white;
+    padding: 20px;
+}
+
+.container {
+    width: 100%;
+    max-width: 440px;
+    background: rgba(255,255,255,.12);
+    backdrop-filter: blur(15px);
+    border-radius: 25px;
+    padding: 30px 25px;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(255,255,255,.3);
+    position: relative;
+    z-index: 2;
+}
+
+h1 { font-family:'Great Vibes', cursive; font-size:42px; margin-bottom:5px; }
+h3 { font-weight:300; margin-bottom:16px; opacity:.9; }
+label { display:block; text-align:left; font-size:13px; margin:12px 0 4px; opacity:.9; }
+p.small { font-size:12px; opacity:.85; margin-top:6px; line-height:1.5; }
+
+.screen { display:none; }
+.screen.active { display:block; animation: fadeIn .5s ease; }
+@keyframes fadeIn { from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+
+input[type=text], textarea {
+    width:100%;
+    padding:10px 12px;
+    border-radius:10px;
+    border:none;
+    font-size:14px;
+    font-family:'Poppins', sans-serif;
+}
+textarea { resize:vertical; min-height:50px; }
+
+button {
+    padding:12px 20px;
+    border:none;
+    border-radius:30px;
+    font-size:14px;
+    cursor:pointer;
+    font-weight:bold;
+    transition:transform .2s ease;
+}
+button:hover { transform:scale(1.03); }
+
+.btn-primary { background:white; color:#e91e63; width:100%; margin-top:14px; }
+.btn-upi { background:#00b86b; color:white; width:100%; margin-top:10px; }
+.btn-copy { background:#ffe082; color:#7a4a00; width:100%; margin-top:10px; }
+
+#question { margin:18px 0 14px; font-size:19px; line-height:1.4; }
+
+.answer-grid {
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-top:10px;
+}
+.answer-btn {
+    background:white;
+    color:#e91e63;
+    width:100%;
+    padding:12px;
+    font-size:14px;
+}
+.answer-btn.custom { background:#ffe082; color:#7a4a00; }
+
+#customBox { display:none; margin-top:12px; }
+
+.link-box {
+    background:rgba(255,255,255,.15);
+    border-radius:12px;
+    padding:12px;
+    font-size:12px;
+    word-break:break-all;
+    margin-top:10px;
+}
+
+.hearts span {
+    position:fixed;
+    color:pink;
+    animation:fall linear infinite;
+    pointer-events:none;
+    z-index:1;
+}
+@keyframes fall {
+    0%{transform:translateY(-100px); opacity:0;}
+    20%{opacity:1;}
+    100%{transform:translateY(110vh); opacity:0;}
+}
+
+.final-heart { font-size:60px; margin:10px 0; animation:pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.15);} }
+#finalMsg { font-size:16px; line-height:1.7; margin-top:10px; }
+</style>
+</head>
+
+<body>
+
+<div class="hearts"></div>
+
+<div class="container">
+
+<!-- ===== SCREEN 0: CREATE ===== -->
+<div class="screen" id="createScreen">
+    <h1>Create Your Proposal ❤️</h1>
+
+    <label>Your name</label>
+    <input type="text" id="senderName" placeholder="e.g. Rahul">
+
+    <label>Her name (recipient)</label>
+    <input type="text" id="herName" placeholder="e.g. Priya">
+
+    <label>Your proposal message</label>
+    <textarea id="proposalMsg" placeholder="Will you forever be mine?">Will you forever be mine?</textarea>
+
+    <label>Answer option 1</label>
+    <input type="text" id="opt1" value="Yes, forever ❤️">
+    <label>Answer option 2</label>
+    <input type="text" id="opt2" value="Absolutely, always 😍">
+    <label>Answer option 3</label>
+    <input type="text" id="opt3" value="You already know 🥰">
+    <label>Answer option 4</label>
+    <input type="text" id="opt4" value="My heart says yes 💖">
+    <p class="small">A 5th button ("Let me write my own") is added automatically.</p>
+
+    <label>Final message (shown after she answers)</label>
+    <textarea id="finalMsgInput" placeholder="I knew you'd say yes...">I knew you'd say yes. From today, every heartbeat of mine belongs to you. ❤️</textarea>
+
+    <button class="btn-primary" onclick="goToPreview()">Preview My Page</button>
+    <p class="small">Review how it will look before you pay and generate the link.</p>
+</div>
+
+<!-- ===== SCREEN 1: PROPOSAL (preview for creator / live for recipient) ===== -->
+<div class="screen" id="proposalScreen">
+    <button id="soundToggle" onclick="toggleSound()" style="position:absolute; top:15px; right:15px; background:rgba(255,255,255,.2); color:white; border-radius:50%; width:38px; height:38px; padding:0; font-size:16px;">🔇</button>
+    <h1 id="dearLine">Dear,</h1>
+    <p class="small" id="fromLine"></p>
+    <h2 id="question"></h2>
+
+    <div class="buttons" style="height:auto; margin-bottom:14px;">
+        <button class="answer-btn" style="width:auto; padding:12px 30px;" onclick="submitAnswer(currentData ? currentData.opts[0] : 'Yes')">Yes 💖</button>
+        <button class="answer-btn" id="noBtn" style="width:auto; padding:12px 30px; position:relative;" onclick="noClicked()">No 🥺</button>
+    </div>
+
+    <div class="answer-grid" id="answerGrid">
+        <button class="answer-btn" data-i="1"></button>
+        <button class="answer-btn" data-i="2"></button>
+        <button class="answer-btn" data-i="3"></button>
+        <button class="answer-btn custom" onclick="showCustomBox()">✍️ Let me write my own</button>
+    </div>
+
+    <div id="customBox">
+        <textarea id="customAnswer" placeholder="Write your own answer..."></textarea>
+        <button class="btn-primary" onclick="submitCustom()">Send my answer</button>
+    </div>
+
+    <!-- Only shown to the creator, during preview -->
+    <div id="previewPayArea" style="display:none; margin-top:22px; border-top:1px solid rgba(255,255,255,.2); padding-top:16px;">
+        <p class="small">Happy with the preview? Pay to generate your shareable link.</p>
+        <label>Have a coupon?</label>
+        <input type="text" id="couponInput" placeholder="Enter coupon code">
+        <button class="btn-copy" style="margin-top:8px;" onclick="applyCoupon()">Apply</button>
+        <p class="small" id="couponMsg"></p>
+
+        <button class="btn-primary" id="payTrigger" onclick="showPayArea()">Pay ₹<span id="finalAmount">10</span> to Generate Link</button>
+        <div id="payArea" style="display:none;">
+            <button class="btn-upi" onclick="openUPI()">Pay ₹10 via UPI</button>
+            <button class="btn-primary" onclick="markPaidAndGenerate()">I've Paid — Generate Link</button>
+        </div>
+        <p class="small">Payment via UPI. Replace the UPI ID in this file with your own before sharing.</p>
+
+        <div id="linkArea" style="display:none;">
+            <p class="small">Share this link with her:</p>
+            <div class="link-box" id="generatedLink"></div>
+            <button class="btn-copy" onclick="copyLink()">Copy Link 📋</button>
+            <button class="btn-upi" id="whatsappBtn" style="margin-top:8px; text-decoration:none; display:block; text-align:center;" onclick="shareWhatsApp()">Share on WhatsApp</button>
+        </div>
+        <button class="btn-copy" style="margin-top:10px;" onclick="backToEdit()">◀ Back to Edit</button>
+    </div>
+</div>
+
+<!-- ===== SCREEN 2: FINAL MESSAGE ===== -->
+<div class="screen" id="celebrationScreen">
+    <div class="final-heart">💍</div>
+    <h1>❤️</h1>
+    <p id="herAnswerLine" class="small" style="font-size:14px;"></p>
+    <img id="celebrationGif" src="celebration.gif" alt="" style="max-width:100%; border-radius:15px; margin-top:14px; display:none;" onerror="this.style.display='none';">
+    <p id="finalMsg"></p>
+    <button class="btn-copy" id="testAgainBtn" style="display:none; margin-top:20px;" onclick="backToEdit()">◀ Back to Edit</button>
+</div>
+
+</div>
+
+<audio id="bgMusic" loop>
+    <source src="music.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+/* ---------- CONFIG ---------- */
+const UPI_ID = "Ujjwalkumardmk132-1@okaxis";   // ⚠️ Copied exactly from Google Pay — double-check for typos before sharing
+const UPI_NAME = "Ujjwalkumar";
+const AMOUNT_BASE = 10;
+let currentAmount = AMOUNT_BASE;
+
+/* ---------- HEARTS ---------- */
+function createHeart(){
+    const h=document.createElement("span");
+    h.innerHTML="❤";
+    h.style.left=Math.random()*100+"vw";
+    h.style.fontSize=(Math.random()*20+15)+"px";
+    h.style.animationDuration=(Math.random()*5+5)+"s";
+    document.querySelector(".hearts").appendChild(h);
+    setTimeout(()=>h.remove(),10000);
+}
+setInterval(createHeart,300);
+
+/* ---------- SOUND TOGGLE ---------- */
+function toggleSound(){
+    const music = document.getElementById("bgMusic");
+    const btn = document.getElementById("soundToggle");
+    if(music.paused){
+        music.play().then(()=>{ btn.innerText = "🔊"; }).catch(()=>{ alert("Add your own music.mp3 file next to this HTML file for sound to work."); });
+    } else {
+        music.pause();
+        btn.innerText = "🔇";
+    }
+}
+
+/* ---------- WHATSAPP SHARE ---------- */
+function shareWhatsApp(){
+    const link = document.getElementById("generatedLink").innerText;
+    const text = encodeURIComponent("I made something special for you 💌 " + link);
+    window.open("https://wa.me/?text=" + text, "_blank");
+}
+
+function showScreen(id){
+    document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+}
+
+/* ---------- ROUTING ---------- */
+const params = new URLSearchParams(window.location.search);
+const dataParam = params.get("data");
+let isPreviewMode = false;
+
+if (dataParam) {
+    try {
+        const data = JSON.parse(decodeURIComponent(escape(atob(dataParam))));
+        loadProposal(data);
+        showScreen("proposalScreen");
+    } catch(e) {
+        showScreen("createScreen");
+    }
+} else {
+    showScreen("createScreen");
+}
+
+/* ---------- PREVIEW (creator reviews before paying) ---------- */
+function collectFormData(){
+    return {
+        sender: document.getElementById("senderName").value.trim(),
+        her: document.getElementById("herName").value.trim(),
+        msg: document.getElementById("proposalMsg").value.trim(),
+        opts: [
+            document.getElementById("opt1").value.trim(),
+            document.getElementById("opt2").value.trim(),
+            document.getElementById("opt3").value.trim(),
+            document.getElementById("opt4").value.trim()
+        ],
+        final: document.getElementById("finalMsgInput").value.trim()
+    };
+}
+
+function goToPreview(){
+    const data = collectFormData();
+    if(!data.sender || !data.her){ alert("Please fill in your name and her name."); return; }
+    isPreviewMode = true;
+    loadProposal(data);
+    showScreen("proposalScreen");
+    document.getElementById("previewPayArea").style.display = "block";
+}
+
+function backToEdit(){
+    isPreviewMode = false;
+    document.getElementById("previewPayArea").style.display = "none";
+    document.getElementById("payArea").style.display = "none";
+    document.getElementById("linkArea").style.display = "none";
+    showScreen("createScreen");
+}
+
+/* ---------- COUPONS ---------- */
+function applyCoupon(){
+    const code = document.getElementById("couponInput").value.trim().toUpperCase();
+    const msg = document.getElementById("couponMsg");
+
+    if(code === "LOVE80"){
+        currentAmount = Math.max(0, AMOUNT_BASE - 5);
+        msg.innerText = "Coupon applied: ₹5 off!";
+    } else if(code === "LOVE50"){
+        currentAmount = 0;
+        msg.innerText = "Coupon applied: Free!";
+    } else if(code === "ATTACH8"){
+        currentAmount = 7;
+        msg.innerText = "Coupon applied: ₹7 total!";
+    } else {
+        currentAmount = AMOUNT_BASE;
+        msg.innerText = "Invalid coupon code.";
+    }
+
+    document.getElementById("finalAmount").innerText = currentAmount;
+}
+function showPayArea(){
+    document.getElementById("payArea").style.display = "block";
+    document.getElementById("payTrigger").style.display = "none";
+}
+
+function openUPI(){
+    const link = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(UPI_NAME)}&am=${currentAmount}&cu=INR&tn=Love%20Page`;
+    window.location.href = link;
+}
+
+function markPaidAndGenerate(){
+    const data = collectFormData();
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+    const base = window.location.href.split("?")[0];
+    const link = `${base}?data=${encoded}`;
+    document.getElementById("generatedLink").innerText = link;
+    document.getElementById("linkArea").style.display = "block";
+}
+
+function copyLink(){
+    const text = document.getElementById("generatedLink").innerText;
+    navigator.clipboard.writeText(text).then(()=>alert("Link copied!"));
+}
+
+/* ---------- LOAD PROPOSAL (preview or live recipient view) ---------- */
+let currentData = null;
+function loadProposal(data){
+    currentData = data;
+    document.getElementById("dearLine").innerText = "Dear " + data.her + ",";
+    document.getElementById("fromLine").innerText = "From " + data.sender;
+    document.getElementById("question").innerText = data.msg;
+
+    const buttons = document.querySelectorAll(".answer-btn[data-i]");
+    buttons.forEach((btn, idx) => {
+        btn.innerText = data.opts[idx];
+        btn.onclick = () => submitAnswer(data.opts[idx]);
+    });
+}
+
+function noClicked(){
+    const btn = document.getElementById("noBtn");
+    btn.style.position = "fixed";
+    btn.style.left = (Math.random()*(window.innerWidth-120))+"px";
+    btn.style.top = (Math.random()*(window.innerHeight-60))+"px";
+    btn.style.transition = "0.2s";
+}
+
+function showCustomBox(){
+    document.getElementById("customBox").style.display = "block";
+}
+
+function submitCustom(){
+    const val = document.getElementById("customAnswer").value.trim();
+    if(!val){ alert("Please write something first."); return; }
+    submitAnswer(val);
+}
+
+function submitAnswer(answerText){
+    document.getElementById("herAnswerLine").innerText = "She said: \"" + answerText + "\"";
+    document.getElementById("finalMsg").innerText = currentData.final;
+    document.getElementById("celebrationGif").style.display = "block";
+    document.getElementById("testAgainBtn").style.display = isPreviewMode ? "inline-block" : "none";
+    confetti();
+    setTimeout(()=>{ showScreen("celebrationScreen"); }, 600);
+}
+
+/* ---------- CONFETTI ---------- */
+function confetti(){
+    for(let i=0;i<100;i++){
+        let s=document.createElement("span");
+        s.innerHTML="💖";
+        s.style.position="fixed";
+        s.style.left=Math.random()*100+"vw";
+        s.style.top="-10px";
+        s.style.fontSize="20px";
+        s.style.animation="fall 3s linear";
+        s.style.zIndex="10";
+        document.body.appendChild(s);
+        setTimeout(()=>s.remove(),3000);
+    }
+}
+</script>
+
+</body>
+</html>
